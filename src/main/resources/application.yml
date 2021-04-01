@@ -1,0 +1,15 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB:mongodb://localhost:27017}
+      database: ${MONGODB_NAME:motodtp}
+  mvc:
+    log-request-details: true
+#logging:
+#  level:
+#    root: DEBUG
+#    org.springframework: DEBUG
+
+logging:
+  level:
+    org.springframework.web.reactive.function.client.ExchangeFunctions: TRACE
