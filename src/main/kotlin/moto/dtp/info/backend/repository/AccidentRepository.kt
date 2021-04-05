@@ -10,9 +10,9 @@ import reactor.core.publisher.Mono
 
 @Repository
 interface AccidentRepository : ReactiveMongoRepository<Accident, ObjectId> {
-    @Query(value = "{created: {\$gte: ?0}, hidden: ?1}")
-    suspend fun findFrom(from: Long, hidden: Boolean): Flux<Accident>
+    @Query(value = "{created: {\$gte: ?0}}")
+    suspend fun findFrom(from: Long): Flux<Accident>
 
-    @Query(value = "{_id: ?0, created: {\$gte: ?1}, hidden: ?2}")
-    suspend fun findOneFrom(id: ObjectId, from: Long, hidden: Boolean): Mono<Accident>
+    @Query(value = "{_id: ?0, created: {\$gte: ?1}}")
+    suspend fun findOneFrom(id: ObjectId, from: Long): Mono<Accident>
 }

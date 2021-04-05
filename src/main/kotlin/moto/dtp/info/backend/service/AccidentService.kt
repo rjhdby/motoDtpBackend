@@ -28,9 +28,10 @@ class AccidentService(
         val user = userService.getUser(token) ?: UserService.ANONYMOUS_USER
         val from = TimeUtils.currentSec() - MobileConfiguration.adjustDepth(user.role, depth) * SECONDS_IN_HOUR
 
-        return accidentRepository.findFrom(from, includeHidden(user.role))
+        return accidentRepository.findFrom(from)
             .asFlow()
             .filter { it.updated > lastFetch ?: from }
+            .filter { canBeShowedToRole(user.role, it) }
             .filter { geoConstraint.matches(it.location.getGeoPoint()) }
             .toList()
     }
@@ -39,7 +40,8 @@ class AccidentService(
         val user = userService.getUser(token) ?: UserService.ANONYMOUS_USER
         val from = TimeUtils.currentSec() - MobileConfiguration.adjustDepth(user.role, 356) * SECONDS_IN_HOUR
 
-        return accidentRepository.findOneFrom(ObjectId(id), from, includeHidden(user.role)).awaitFirstOrNull()
+        return accidentRepository.findOneFrom(ObjectId(id), from).awaitFirstOrNull()
+            ?.takeIf { canBeShowedToRole(user.role, it) }
             ?: throw NotFoundException()
     }
 
@@ -115,9 +117,9 @@ class AccidentService(
         return accidentRepository.save(accident).awaitFirst()
     }
 
-    private fun includeHidden(role: UserRole) = when (role) {
-        UserRole.DEVELOPER, UserRole.ADMIN, UserRole.MODERATOR -> true
-        else                                                   -> false
+    private fun canBeShowedToRole(role: UserRole, accident: Accident) = when {
+        role.moderationAllowed() -> true
+        else                     -> !accident.hidden
     }
 
     private fun guardAdmin(user: User) {
