@@ -18,5 +18,6 @@ data class AccidentResponse(
     val creator: String,
     val location: Address,
     val description: String,
-    val conflict: Boolean
+    val conflict: Boolean,
+    val messages: Int
 )

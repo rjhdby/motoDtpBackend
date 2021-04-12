@@ -1,51 +1,58 @@
 package moto.dtp.info.backend.service
 
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactive.awaitFirst
-import kotlinx.coroutines.reactive.awaitFirstOrNull
 import moto.dtp.info.backend.configuration.MobileConfiguration
+import moto.dtp.info.backend.datasources.AccidentDataSource
+import moto.dtp.info.backend.datasources.UserDataSource
 import moto.dtp.info.backend.domain.accident.Accident
 import moto.dtp.info.backend.domain.accident.GeoConstraint
 import moto.dtp.info.backend.domain.user.User
 import moto.dtp.info.backend.domain.user.UserRole
 import moto.dtp.info.backend.exception.InsufficientRightsException
 import moto.dtp.info.backend.exception.NotFoundException
-import moto.dtp.info.backend.repository.AccidentRepository
 import moto.dtp.info.backend.rest.request.CreateAccidentRequest
+import moto.dtp.info.backend.rest.response.AccidentResponse
 import moto.dtp.info.backend.utils.TimeUtils
-import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 
 @Service
 class AccidentService(
-    private val userService: UserService,
-    private val accidentRepository: AccidentRepository,
+    private val userDataSource: UserDataSource,
     private val notificatorService: NotificatorService,
+    private val accidentDataSource: AccidentDataSource,
+    private val messageService: MessageService,
 ) {
-    suspend fun getList(token: String, depth: Int, lastFetch: Long?, geoConstraint: GeoConstraint): List<Accident> {
-        val user = userService.getUser(token) ?: UserService.ANONYMOUS_USER
+    suspend fun getList(
+        token: String,
+        depth: Int,
+        lastFetch: Long?,
+        geoConstraint: GeoConstraint
+    ): List<AccidentResponse> {
+        val user = getUser(token)
         val from = TimeUtils.currentSec() - MobileConfiguration.adjustDepth(user.role, depth) * SECONDS_IN_HOUR
 
-        return accidentRepository.findFrom(from)
-            .asFlow()
+        return accidentDataSource.getListFrom(from)
             .filter { it.updated > lastFetch ?: from }
             .filter { canBeShowedToRole(user.role, it) }
             .filter { geoConstraint.matches(it.location.getGeoPoint()) }
+            .map { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
             .toList()
     }
 
-    suspend fun get(token: String, id: String): Accident {
-        val user = userService.getUser(token) ?: UserService.ANONYMOUS_USER
+    private suspend fun countMessages(token: String, id: String): Int {
+        return messageService.getList(token, id).count()
+    }
+
+    suspend fun get(token: String, id: String): AccidentResponse {
+        val user = getUser(token)
         val from = TimeUtils.currentSec() - MobileConfiguration.adjustDepth(user.role, 356) * SECONDS_IN_HOUR
 
-        return accidentRepository.findOneFrom(ObjectId(id), from).awaitFirstOrNull()
+        return accidentDataSource.findOneFrom(id, from)
             ?.takeIf { canBeShowedToRole(user.role, it) }
+            ?.let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
             ?: throw NotFoundException()
     }
 
-    suspend fun create(token: String, request: CreateAccidentRequest): Accident {
+    suspend fun create(token: String, request: CreateAccidentRequest): AccidentResponse {
         val user = getUser(token)
         guardReadOnly(user)
 
@@ -65,56 +72,55 @@ class AccidentService(
 
         notificatorService.notifyCreated(accident)
 
-        return accidentRepository.insert(accident).awaitFirst()
+        return accidentDataSource
+            .persist(accident)
+            .let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
     }
 
-    suspend fun update(token: String, id: String, request: CreateAccidentRequest): Accident {
+    suspend fun update(token: String, id: String, request: CreateAccidentRequest): AccidentResponse {
         guardReadOnly(getUser(token))
 
-        val accident = accidentRepository.findById(ObjectId(id)).awaitFirstOrNull() ?: throw NotFoundException()
-        accident.updated = TimeUtils.currentSec()
-        accident.type = request.type
-        accident.hardness = request.hardness
-        accident.location = request.location
-        accident.description = request.description
-
-        return accidentRepository.save(accident).awaitFirst()
+        return applyChanges(id) {
+            it.type = request.type
+            it.hardness = request.hardness
+            it.location = request.location
+            it.description = request.description
+        }.let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
     }
 
-    suspend fun setHidden(token: String, id: String, value: Boolean): Accident {
+    suspend fun setHidden(token: String, id: String, value: Boolean): AccidentResponse {
         guardReadOnly(getUser(token))
 
-        val accident = accidentRepository.findById(ObjectId(id)).awaitFirstOrNull() ?: throw NotFoundException()
-        accident.hidden = value
-        accident.updated = TimeUtils.currentSec()
-
-        return accidentRepository.save(accident).awaitFirst()
+        return applyChanges(id) { it.hidden = value }
+            .let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
     }
 
-    suspend fun setResolve(token: String, id: String, value: Boolean): Accident {
+    suspend fun setResolve(token: String, id: String, value: Boolean): AccidentResponse {
         guardReadOnly(getUser(token))
 
-        val accident = accidentRepository.findById(ObjectId(id)).awaitFirstOrNull() ?: throw NotFoundException()
-        accident.resolved = if (value) TimeUtils.currentSec() else null
-        accident.updated = TimeUtils.currentSec()
-
-        return accidentRepository.save(accident).awaitFirst()
+        return applyChanges(id) { it.resolved = if (value) TimeUtils.currentSec() else null }
+            .let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
     }
 
-    suspend fun setConflict(token: String, id: String, value: Boolean): Accident {
+    suspend fun setConflict(token: String, id: String, value: Boolean): AccidentResponse {
         guardAdmin(getUser(token))
-
-        val accident = accidentRepository.findById(ObjectId(id)).awaitFirstOrNull() ?: throw NotFoundException()
-        accident.conflict = value
-        accident.updated = TimeUtils.currentSec()
-
+        val accident = applyChanges(id) { it.conflict = value }
         if (value) {
             notificatorService.notifyConflict(accident)
         } else {
             notificatorService.notifyConflictCanceled(accident)
         }
 
-        return accidentRepository.save(accident).awaitFirst()
+        return accident.let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
+    }
+
+    private suspend fun applyChanges(id: String, mutator: (Accident) -> Unit): Accident {
+        val accident = accidentDataSource.get(id) ?: throw NotFoundException()
+
+        mutator(accident)
+        accident.updated = TimeUtils.currentSec()
+
+        return accidentDataSource.persist(accident)
     }
 
     private fun canBeShowedToRole(role: UserRole, accident: Accident) = when {
@@ -129,7 +135,7 @@ class AccidentService(
         }
     }
 
-    private suspend fun getUser(token: String): User = userService.getUser(token) ?: UserService.ANONYMOUS_USER
+    private suspend fun getUser(token: String): User = userDataSource.getByToken(token) ?: UserService.ANONYMOUS_USER
 
     private fun guardReadOnly(user: User) {
         if (user.role.isReadonly()) {

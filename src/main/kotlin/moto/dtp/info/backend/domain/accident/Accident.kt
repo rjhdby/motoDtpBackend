@@ -1,14 +1,13 @@
 package moto.dtp.info.backend.domain.accident
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer
+import moto.dtp.info.backend.domain.EntityWithId
 import moto.dtp.info.backend.rest.response.AccidentResponse
 import org.bson.types.ObjectId
 import java.time.Instant
 import java.util.*
 
 data class Accident(
-    @field:JsonSerialize(using = ToStringSerializer::class) val id: ObjectId? = null,
+    override val id: ObjectId? = null,
     val created: Long,
     var updated: Long,
     var type: AccidentType,
@@ -16,12 +15,12 @@ data class Accident(
     var verified: Boolean,
     var hidden: Boolean,
     var hardness: AccidentHardness,
-    @field:JsonSerialize(using = ToStringSerializer::class) val creator: ObjectId,
+    val creator: ObjectId,
     var location: Address,
     var description: String,
     var conflict: Boolean = false
-) {
-    fun toAccidentResponse(): AccidentResponse = AccidentResponse(
+) : EntityWithId {
+    fun toAccidentResponse(messages: Int): AccidentResponse = AccidentResponse(
         id = id?.toHexString(),
         created = Date.from(Instant.ofEpochSecond(created)),
         type = type,
@@ -32,6 +31,7 @@ data class Accident(
         creator = creator.toHexString(),
         location = location,
         description = description,
-        conflict = conflict
+        conflict = conflict,
+        messages = messages
     )
 }
