@@ -4,6 +4,7 @@ import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import moto.dtp.info.backend.domain.user.User
 import moto.dtp.info.backend.repository.UserRepository
+import moto.dtp.info.backend.security.JWTProvider
 import moto.dtp.info.backend.utils.TimeUtils
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
@@ -11,25 +12,27 @@ import org.springframework.stereotype.Service
 @Service
 class UserDataSource(
     private val userRepository: UserRepository,
+    private val tokenService: JWTProvider
 ) {
     private val cache: Cache<String, Pair<User, Long>> = Cache(500) { entry: Pair<User, Long>, currentTime: Long ->
         entry.second < currentTime - TimeUtils.HOUR * 4
     }
 
-    suspend fun getByToken(token: String): User? {
-        val cached = cache.entries().firstOrNull { it.value.first.token == token }
+    suspend fun getByToken(token: String): User {
+        val id = tokenService.extractUserId(token)
+        val cached = cache.get(id)
         if (cached != null) {
-            cache.put(cached.value.first.id!!.toHexString(), Pair(cached.value.first, System.currentTimeMillis()))
+            cache.put(id, Pair(cached.first, System.currentTimeMillis()))
 
-            return cached.value.first
+            return cached.first
         }
 
-        val persisted = userRepository.findByToken(token).awaitFirstOrNull()
+        val persisted = userRepository.findById(ObjectId(id)).awaitFirstOrNull()
         if (persisted != null) {
             cache.put(persisted.id!!.toHexString(), Pair(persisted, System.currentTimeMillis()))
         }
 
-        return persisted
+        return persisted ?: User.ANONYMOUS
     }
 
     suspend fun persist(user: User): User {

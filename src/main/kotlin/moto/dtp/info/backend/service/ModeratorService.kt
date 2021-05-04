@@ -18,7 +18,7 @@ class ModeratorService(
     private val userRepository: UserRepository,
 ) {
     suspend fun setRole(token: String, uid: String, role: UserRole): UserResponse {
-        val admin = userService.getUser(token) ?: throw InsufficientRightsException()
+        val admin = userService.getUser(token)
         guardAdmin(admin)
         val user = userRepository.findById(ObjectId(uid)).awaitFirstOrNull() ?: throw NotFoundException()
         val roles = setOf(role, user.role)
