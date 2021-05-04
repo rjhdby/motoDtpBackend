@@ -1,4 +1,4 @@
-package moto.dtp.info.backend.rest
+package moto.dtp.info.backend.rest.v1
 
 import kotlinx.coroutines.reactor.mono
 import moto.dtp.info.backend.domain.accident.GeoConstraint
@@ -6,16 +6,14 @@ import moto.dtp.info.backend.rest.handler.ResponseHandler.handle
 import moto.dtp.info.backend.rest.request.CreateAccidentRequest
 import moto.dtp.info.backend.rest.response.AccidentResponse
 import moto.dtp.info.backend.service.AccidentService
-import moto.dtp.info.backend.service.MessageService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
 
 @RestController
-@RequestMapping("accident")
+@RequestMapping(value = ["${Versions.V1}/accident"])
 class AccidentController(
     private val accidentService: AccidentService,
-    private val messageService: MessageService
 ) {
     @GetMapping(value = ["/list"])
     fun getList(

@@ -50,3 +50,9 @@ tasks.withType<Jar> {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions {
+        useIR = true
+    }
+}
