@@ -2,6 +2,7 @@ package moto.dtp.info.backend.service
 
 import moto.dtp.info.backend.configuration.MobileConfiguration
 import moto.dtp.info.backend.datasources.AccidentDataSource
+import moto.dtp.info.backend.datasources.MessagesDataSource
 import moto.dtp.info.backend.datasources.UserDataSource
 import moto.dtp.info.backend.domain.accident.Accident
 import moto.dtp.info.backend.domain.accident.GeoConstraint
@@ -11,6 +12,8 @@ import moto.dtp.info.backend.exception.InsufficientRightsException
 import moto.dtp.info.backend.exception.NotFoundException
 import moto.dtp.info.backend.rest.request.CreateAccidentRequest
 import moto.dtp.info.backend.rest.response.AccidentResponse
+import moto.dtp.info.backend.service.filters.CanSeeAccidentFilter
+import moto.dtp.info.backend.service.filters.CanSeeMessageFilter
 import moto.dtp.info.backend.utils.TimeUtils
 import org.springframework.stereotype.Service
 
@@ -19,7 +22,7 @@ class AccidentService(
     private val userDataSource: UserDataSource,
     private val notificatorService: NotificatorService,
     private val accidentDataSource: AccidentDataSource,
-    private val messageService: MessageService,
+    private val messagesDataSource: MessagesDataSource,
 ) {
     suspend fun getList(
         token: String,
@@ -32,14 +35,17 @@ class AccidentService(
 
         return accidentDataSource.getListFrom(from)
             .filter { it.updated > lastFetch ?: from }
-            .filter { canBeShowedToRole(user.role, it) }
+            .filter { CanSeeAccidentFilter.canSee(user, it) }
             .filter { geoConstraint.matches(it.location.getGeoPoint()) }
             .map { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
             .toList()
     }
 
     private suspend fun countMessages(token: String, id: String): Int {
-        return messageService.getList(token, id).count()
+        val user = getUser(token)
+        return messagesDataSource.getForTopic(id) {
+            CanSeeMessageFilter.canSee(user, it)
+        }.count()
     }
 
     suspend fun get(token: String, id: String): AccidentResponse {
@@ -47,9 +53,9 @@ class AccidentService(
         val from = TimeUtils.currentSec() - MobileConfiguration.adjustDepth(user.role, 356) * SECONDS_IN_HOUR
 
         return accidentDataSource.findOneFrom(id, from)
-            ?.takeIf { canBeShowedToRole(user.role, it) }
-            ?.let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
-            ?: throw NotFoundException()
+                   ?.takeIf { CanSeeAccidentFilter.canSee(user, it) }
+                   ?.let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
+               ?: throw NotFoundException()
     }
 
     suspend fun create(token: String, request: CreateAccidentRequest): AccidentResponse {
@@ -123,11 +129,6 @@ class AccidentService(
         return accidentDataSource.persist(accident)
     }
 
-    private fun canBeShowedToRole(role: UserRole, accident: Accident) = when {
-        role.moderationAllowed() -> true
-        else                     -> !accident.hidden
-    }
-
     private fun guardAdmin(user: User) {
         when (user.role) {
             UserRole.ADMIN, UserRole.DEVELOPER -> return
@@ -135,7 +136,7 @@ class AccidentService(
         }
     }
 
-    private suspend fun getUser(token: String): User = userDataSource.getByToken(token) ?: UserService.ANONYMOUS_USER
+    private suspend fun getUser(token: String): User = userDataSource.getByToken(token)
 
     private fun guardReadOnly(user: User) {
         if (user.role.isReadonly()) {

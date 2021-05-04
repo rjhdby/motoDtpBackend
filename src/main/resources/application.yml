@@ -10,6 +10,10 @@ spring:
 #    root: DEBUG
 #    org.springframework: DEBUG
 
+motodtp:
+  security:
+    jwtSecret: ${JWT_SECRET:b7njzm4937NGM@ONdyueoxnBJDg47r78}
+
 logging:
   level:
     org.springframework.web.reactive.function.client.ExchangeFunctions: TRACE

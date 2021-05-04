@@ -10,6 +10,7 @@ import moto.dtp.info.backend.repository.AccidentRepository
 import moto.dtp.info.backend.utils.TimeUtils
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
+import kotlin.contracts.contract
 
 @Service
 class AccidentDataSource(

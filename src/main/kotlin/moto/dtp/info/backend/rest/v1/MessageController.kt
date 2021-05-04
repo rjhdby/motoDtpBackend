@@ -7,7 +7,9 @@ import moto.dtp.info.backend.service.MessageService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
+import kotlin.contracts.ExperimentalContracts
 
+@ExperimentalContracts
 @RestController
 @RequestMapping(value = ["${Versions.V1}/message"])
 class MessageController(

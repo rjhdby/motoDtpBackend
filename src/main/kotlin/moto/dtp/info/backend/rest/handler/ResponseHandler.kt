@@ -1,5 +1,6 @@
 package moto.dtp.info.backend.rest.handler
 
+import moto.dtp.info.backend.exception.AuthException
 import moto.dtp.info.backend.exception.InsufficientRightsException
 import moto.dtp.info.backend.exception.NotFoundException
 import org.springframework.http.HttpStatus
@@ -15,5 +16,7 @@ object ResponseHandler {
             ResponseEntity(HttpStatus.NOT_FOUND)
         } catch (e: IllegalArgumentException) {
             ResponseEntity(HttpStatus.EXPECTATION_FAILED)
+        } catch (e: AuthException) {
+            ResponseEntity(HttpStatus.FORBIDDEN)
         }
 }

@@ -3,42 +3,40 @@ package moto.dtp.info.backend.service
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import moto.dtp.info.backend.datasources.UserDataSource
-import moto.dtp.info.backend.domain.user.*
-import moto.dtp.info.backend.exception.NotFoundException
+import moto.dtp.info.backend.domain.user.Auth
+import moto.dtp.info.backend.domain.user.AuthType
+import moto.dtp.info.backend.domain.user.Credentials
+import moto.dtp.info.backend.domain.user.User
 import moto.dtp.info.backend.repository.AuthRepository
 import moto.dtp.info.backend.rest.request.AuthRequest
 import moto.dtp.info.backend.rest.response.UserResponse
+import moto.dtp.info.backend.security.JWTProvider
 import org.springframework.stereotype.Service
 
 @Service
 class UserService(
     private val authRepository: AuthRepository,
     private val authRequestValidator: AuthRequestValidator,
-    private val tokenService: TokenService,
+    private val tokenService: JWTProvider,
     private val userDataSource: UserDataSource,
 ) {
-    suspend fun getUser(token: String): User? = when {
-        tokenService.isAnonymous(token) -> ANONYMOUS_USER
-        else                            -> userDataSource.getByToken(token)
-    }
+    suspend fun getUser(token: String): User = userDataSource.getByToken(token)
 
-    suspend fun getUserResponse(token: String): UserResponse = UserResponse.fromUser(
-        getUser(token) ?: throw NotFoundException()
-    )
+    suspend fun getUserResponse(token: String): UserResponse = UserResponse.fromUser(getUser(token))
 
     suspend fun register(request: AuthRequest): String {
         authRequestValidator.validate(request)
         tryToLogin(request)?.let { return it }
 
         return when (request) {
-            AuthRequest.Anonymous -> TokenService.ANONYMOUS_TOKEN
+            AuthRequest.Anonymous -> tokenService.createToken(User.ANONYMOUS)
             is AuthRequest.Basic  -> registerBasic(request)
         }
     }
 
     private suspend fun tryToLogin(request: AuthRequest): String? {
         val auth = when (request) {
-            AuthRequest.Anonymous -> return TokenService.ANONYMOUS_TOKEN
+            AuthRequest.Anonymous -> return tokenService.createToken(User.ANONYMOUS)
             is AuthRequest.Basic  -> authRepository.findByLogin(request.login).awaitFirstOrNull() ?: return null
         }
 
@@ -46,8 +44,7 @@ class UserService(
     }
 
     private suspend fun registerBasic(request: AuthRequest.Basic): String {
-        val token = tokenService.createToken(request)
-        val user = userDataSource.persist(User(token = token, nick = request.nick ?: "Unknown"))
+        val user = userDataSource.persist(User(nick = request.nick ?: "Unknown"))
         val auth = Auth(
             uid = user.id!!,
             type = AuthType.BASIC,
@@ -56,7 +53,7 @@ class UserService(
 
         authRepository.save(auth).awaitFirst()
 
-        return token
+        return tokenService.createToken(user)
     }
 
     private suspend fun login(request: AuthRequest, auth: Auth): String {
@@ -65,14 +62,12 @@ class UserService(
             AuthRequest.Anonymous -> Unit
         }
 
-        return userDataSource.get(auth.uid.toHexString())?.token ?: throwInternal()
+        val user = userDataSource.get(auth.uid.toHexString()) ?: throwInternal()
+
+        return tokenService.createToken(user)
     }
 
     private fun throwInternal(): Nothing {
         throw InternalError("Something went terrible wrong")
-    }
-
-    companion object {
-        val ANONYMOUS_USER = User(nick = "Anonymous", token = TokenService.ANONYMOUS_TOKEN, role = UserRole.READ_ONLY)
     }
 }
