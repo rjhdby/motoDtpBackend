@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service
 class AuthRequestValidator {
     suspend fun validate(authRequest: AuthRequest) {
         when (authRequest) {
-            AuthRequest.Anonymous -> return
             is AuthRequest.Basic  -> validateBasic(authRequest)
+            else -> return
         }
     }
 

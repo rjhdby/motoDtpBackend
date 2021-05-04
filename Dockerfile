@@ -1,4 +1,4 @@
-FROM openjdk:15-alpine
+FROM bellsoft/liberica-openjdk-alpine-musl:15
 
 COPY ./build/libs/motodtp-0.0.1-SNAPSHOT.jar motodtp.jar
 
