@@ -13,7 +13,7 @@ services:
     depends_on:
       - mongo
   mongo:
-    image: mongo
+    image: mvertes/alpine-mongo
     ports:
       - "27019:27017"
     logging:

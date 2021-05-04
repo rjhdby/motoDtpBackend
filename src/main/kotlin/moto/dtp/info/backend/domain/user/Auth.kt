@@ -7,4 +7,5 @@ data class Auth(
     val uid: ObjectId,
     val type: AuthType,
     val credentials: Credentials? = null,
+    val vk: VkUser? = null
 )

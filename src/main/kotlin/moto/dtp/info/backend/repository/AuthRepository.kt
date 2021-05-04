@@ -11,4 +11,7 @@ import reactor.core.publisher.Mono
 interface AuthRepository : ReactiveMongoRepository<Auth, ObjectId> {
     @Query(value = "{'credentials.login' :?0}")
     suspend fun findByLogin(login: String): Mono<Auth>
+
+    @Query(value = "{'vk.id' :?0}")
+    suspend fun findByVkId(vkId: Int): Mono<Auth>
 }
