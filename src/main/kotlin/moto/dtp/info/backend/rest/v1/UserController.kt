@@ -1,4 +1,4 @@
-package moto.dtp.info.backend.rest
+package moto.dtp.info.backend.rest.v1
 
 import kotlinx.coroutines.reactor.mono
 import moto.dtp.info.backend.rest.handler.ResponseHandler.handle
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
 
 @RestController
-@RequestMapping("user")
+@RequestMapping(value = ["${Versions.V1}/user"])
 class UserController(
     private val userService: UserService,
 ) {

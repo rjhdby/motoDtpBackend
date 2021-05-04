@@ -1,4 +1,4 @@
-package moto.dtp.info.backend.rest
+package moto.dtp.info.backend.rest.v1
 
 import kotlinx.coroutines.reactor.mono
 import moto.dtp.info.backend.domain.user.UserRole
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
 
 @RestController
-@RequestMapping("moderator")
+@RequestMapping(value = ["${Versions.V1}/moderator"])
 class ModeratorController(
     private val moderatorService: ModeratorService,
 ) {
