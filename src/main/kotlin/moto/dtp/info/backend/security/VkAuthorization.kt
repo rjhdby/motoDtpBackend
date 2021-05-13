@@ -85,6 +85,9 @@ class VkAuthorization(
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class VkUserDataResponse(
         val response: List<UserData>
+        /*
+        {"error":{"error_code":8,"error_msg":"Invalid request: versions below 5.21 are deprecated. Version param should be passed as \"v\". \"version\" param is invalid and not supported. For more information go to https:\/\/vk.com\/dev\/constant_version_updates","request_params":[{"key":"user_ids","value":"84317954"},{"key":"v","value":"5.13"},{"key":"method","value":"users.get"},{"key":"oauth","value":"1"}]}}
+         */
     ) {
         @ConstructorBinding
         @JsonIgnoreProperties(ignoreUnknown = true)

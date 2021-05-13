@@ -71,7 +71,7 @@ class AccidentController(
 
     @PutMapping(value = ["/{id}/resolve"])
     fun resolve(
-        @RequestHeader("authorization") token: String,
+        @RequestHeader("token") token: String,
         @PathVariable id: String,
     ): Mono<ResponseEntity<AccidentResponse>> =
         mono { handle { accidentService.setResolve(token, id, true) } }
