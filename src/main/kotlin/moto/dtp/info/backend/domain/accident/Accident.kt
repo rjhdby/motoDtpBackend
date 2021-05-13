@@ -14,7 +14,7 @@ data class Accident(
     var resolved: Long? = null,
     var verified: Boolean,
     var hidden: Boolean,
-    var hardness: AccidentHardness?,
+    var hardness: AccidentHardness? = null,
     val creator: ObjectId,
     var location: Address,
     var description: String,
