@@ -14,7 +14,7 @@ data class AccidentResponse(
     val resolved: Date?,
     val verified: Boolean,
     val hidden: Boolean,
-    val hardness: AccidentHardness,
+    val hardness: AccidentHardness?,
     val creator: String,
     val location: Address,
     val description: String,
