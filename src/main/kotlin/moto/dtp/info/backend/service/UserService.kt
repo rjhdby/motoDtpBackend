@@ -36,8 +36,8 @@ class UserService(
         return tokenService.createToken(user)
     }
 
-    suspend fun persist(user: User) {
-        userDataSource.persist(user)
+    suspend fun persist(user: User): User {
+        return userDataSource.persist(user)
     }
 
     companion object {

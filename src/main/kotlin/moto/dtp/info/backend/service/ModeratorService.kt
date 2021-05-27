@@ -27,9 +27,7 @@ class ModeratorService(
 
         user.role = role
 
-        userService.persist(user)
-
-        return UserResponse.fromUser(user)
+        return UserResponse.fromUser(userService.persist(user))
     }
 
     private fun guardModerator(user: User) {
