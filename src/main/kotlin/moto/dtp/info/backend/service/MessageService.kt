@@ -24,7 +24,7 @@ class MessageService(
 ) {
     suspend fun create(token: String, topic: String, text: String): Message {
         guardText(text)
-        val user = userService.getUser(token)
+        val user = userService.getUserByToken(token)
         if (user.role.isReadonly()) {
             throw InsufficientRightsException()
         }
@@ -44,7 +44,7 @@ class MessageService(
     }
 
     suspend fun getList(token: String, topic: String): List<Message> {
-        val user = userService.getUser(token)
+        val user = userService.getUserByToken(token)
         val accident = accidentDataSource.get(topic)
         guardCanSeeAccident(user, accident)
 
@@ -65,9 +65,9 @@ class MessageService(
     }
 
     private suspend fun applyChanges(token: String, id: String, mutator: (Message) -> Unit): Message {
-        val user = userService.getUser(token)
+        val user = userService.getUserByToken(token)
         val message = messagesDataSource.get(ObjectId(id)) ?: throw NotFoundException()
-        guardChangeInitiator(message, user)
+        guarModerator(user)
 
         mutator(message)
         message.updated = TimeUtils.currentSec()
@@ -88,8 +88,8 @@ class MessageService(
         }
     }
 
-    private fun guardChangeInitiator(message: Message, user: User) {
-        if (!user.role.moderationAllowed() && message.author != user.id) {
+    private fun guarModerator(user: User) {
+        if (!user.role.moderationAllowed()) {
             throw InsufficientRightsException()
         }
     }

@@ -2,18 +2,14 @@ package moto.dtp.info.backend.service
 
 import moto.dtp.info.backend.configuration.MobileConfiguration
 import moto.dtp.info.backend.datasources.AccidentDataSource
-import moto.dtp.info.backend.datasources.MessagesDataSource
 import moto.dtp.info.backend.datasources.UserDataSource
 import moto.dtp.info.backend.domain.accident.Accident
 import moto.dtp.info.backend.domain.accident.GeoConstraint
 import moto.dtp.info.backend.domain.user.User
-import moto.dtp.info.backend.domain.user.UserRole
 import moto.dtp.info.backend.exception.InsufficientRightsException
 import moto.dtp.info.backend.exception.NotFoundException
 import moto.dtp.info.backend.rest.request.CreateAccidentRequest
-import moto.dtp.info.backend.rest.response.AccidentResponse
 import moto.dtp.info.backend.service.filters.CanSeeAccidentFilter
-import moto.dtp.info.backend.service.filters.CanSeeMessageFilter
 import moto.dtp.info.backend.utils.TimeUtils
 import org.springframework.stereotype.Service
 
@@ -22,7 +18,6 @@ class AccidentService(
     private val userDataSource: UserDataSource,
     private val notificatorService: NotificatorService,
     private val accidentDataSource: AccidentDataSource,
-    private val messagesDataSource: MessagesDataSource,
 ) {
     suspend fun getList(
         token: String,
@@ -72,7 +67,7 @@ class AccidentService(
     }
 
     suspend fun update(token: String, id: String, request: CreateAccidentRequest): Accident {
-        guardReadOnly(getUser(token))
+        guardModerator(getUser(token))
 
         return applyChanges(id) {
             it.type = request.type
@@ -83,7 +78,7 @@ class AccidentService(
     }
 
     suspend fun setHidden(token: String, id: String, value: Boolean): Accident {
-        guardReadOnly(getUser(token))
+        guardModerator(getUser(token))
 
         return applyChanges(id) { it.hidden = value }
     }
@@ -116,10 +111,19 @@ class AccidentService(
     }
 
     private fun guardAdmin(user: User) {
-        when (user.role) {
-            UserRole.ADMIN, UserRole.DEVELOPER -> return
-            else                               -> throw InsufficientRightsException()
+        if (user.role.canManageConflict()) {
+            return
         }
+
+        throw InsufficientRightsException()
+    }
+
+    private fun guardModerator(user: User) {
+        if (user.role.moderationAllowed()) {
+            return
+        }
+
+        throw InsufficientRightsException()
     }
 
     private suspend fun getUser(token: String): User = userDataSource.getByToken(token)

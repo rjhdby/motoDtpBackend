@@ -18,11 +18,11 @@ class UserService(
     private val vkAuthorization: VkAuthorization,
     private val basicAuthorization: BasicAuthorization,
 ) {
-    suspend fun getUser(token: String): User = userDataSource.getByToken(token)
+    suspend fun getUserByToken(token: String): User = userDataSource.getByToken(token)
 
     suspend fun getUser(id: ObjectId): User? = userDataSource.get(id)
 
-    suspend fun getUserResponse(token: String): UserResponse = UserResponse.fromUser(getUser(token))
+    suspend fun getUserResponse(token: String): UserResponse = UserResponse.fromUser(getUserByToken(token))
 
     suspend fun register(request: AuthRequest): String {
         authRequestValidator.validate(request)
@@ -34,6 +34,10 @@ class UserService(
         }
 
         return tokenService.createToken(user)
+    }
+
+    suspend fun persist(user: User) {
+        userDataSource.persist(user)
     }
 
     companion object {
