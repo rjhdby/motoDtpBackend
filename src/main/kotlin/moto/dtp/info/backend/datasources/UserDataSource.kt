@@ -42,7 +42,8 @@ class UserDataSource(
         return persisted
     }
 
-    suspend fun get(uid: String): User? {
+    suspend fun get(id: ObjectId): User? {
+        val uid = id.toHexString()
         val cached = cache.get(uid)?.first
         if (cached != null) {
             cache.put(cached.id!!.toHexString(), Pair(cached, System.currentTimeMillis()))

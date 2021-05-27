@@ -29,7 +29,7 @@ class AccidentService(
         depth: Int,
         lastFetch: Long?,
         geoConstraint: GeoConstraint
-    ): List<AccidentResponse> {
+    ): List<Accident> {
         val user = getUser(token)
         val from = TimeUtils.currentSec() - MobileConfiguration.adjustDepth(user.role, depth) * SECONDS_IN_HOUR
 
@@ -37,28 +37,18 @@ class AccidentService(
             .filter { it.updated > lastFetch ?: from }
             .filter { CanSeeAccidentFilter.canSee(user, it) }
             .filter { geoConstraint.matches(it.location.getGeoPoint()) }
-            .map { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
             .toList()
     }
 
-    private suspend fun countMessages(token: String, id: String): Int {
-        val user = getUser(token)
-        return messagesDataSource.getForTopic(id) {
-            CanSeeMessageFilter.canSee(user, it)
-        }.count()
-    }
-
-    suspend fun get(token: String, id: String): AccidentResponse {
+    suspend fun get(token: String, id: String): Accident {
         val user = getUser(token)
         val from = TimeUtils.currentSec() - MobileConfiguration.adjustDepth(user.role, 356) * SECONDS_IN_HOUR
 
-        return accidentDataSource.findOneFrom(id, from)
-                   ?.takeIf { CanSeeAccidentFilter.canSee(user, it) }
-                   ?.let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
+        return accidentDataSource.findOneFrom(id, from)?.takeIf { CanSeeAccidentFilter.canSee(user, it) }
                ?: throw NotFoundException()
     }
 
-    suspend fun create(token: String, request: CreateAccidentRequest): AccidentResponse {
+    suspend fun create(token: String, request: CreateAccidentRequest): Accident {
         val user = getUser(token)
         guardReadOnly(user)
 
@@ -78,12 +68,10 @@ class AccidentService(
 
         notificatorService.notifyCreated(accident)
 
-        return accidentDataSource
-            .persist(accident)
-            .let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
+        return accidentDataSource.persist(accident)
     }
 
-    suspend fun update(token: String, id: String, request: CreateAccidentRequest): AccidentResponse {
+    suspend fun update(token: String, id: String, request: CreateAccidentRequest): Accident {
         guardReadOnly(getUser(token))
 
         return applyChanges(id) {
@@ -91,24 +79,22 @@ class AccidentService(
             it.hardness = request.hardness
             it.location = request.location
             it.description = request.description
-        }.let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
+        }
     }
 
-    suspend fun setHidden(token: String, id: String, value: Boolean): AccidentResponse {
+    suspend fun setHidden(token: String, id: String, value: Boolean): Accident {
         guardReadOnly(getUser(token))
 
         return applyChanges(id) { it.hidden = value }
-            .let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
     }
 
-    suspend fun setResolve(token: String, id: String, value: Boolean): AccidentResponse {
+    suspend fun setResolve(token: String, id: String, value: Boolean): Accident {
         guardReadOnly(getUser(token))
 
         return applyChanges(id) { it.resolved = if (value) TimeUtils.currentSec() else null }
-            .let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
     }
 
-    suspend fun setConflict(token: String, id: String, value: Boolean): AccidentResponse {
+    suspend fun setConflict(token: String, id: String, value: Boolean): Accident {
         guardAdmin(getUser(token))
         val accident = applyChanges(id) { it.conflict = value }
         if (value) {
@@ -117,7 +103,7 @@ class AccidentService(
             notificatorService.notifyConflictCanceled(accident)
         }
 
-        return accident.let { it.toAccidentResponse(countMessages(token, it.id!!.toHexString())) }
+        return accident
     }
 
     private suspend fun applyChanges(id: String, mutator: (Accident) -> Unit): Accident {

@@ -16,6 +16,7 @@ data class AccidentResponse(
     val hidden: Boolean,
     val hardness: AccidentHardness?,
     val creator: String,
+    val creatorNick: String,
     val location: Address,
     val description: String,
     val conflict: Boolean,

@@ -7,6 +7,7 @@ import moto.dtp.info.backend.rest.response.UserResponse
 import moto.dtp.info.backend.security.BasicAuthorization
 import moto.dtp.info.backend.security.JWTProvider
 import moto.dtp.info.backend.security.VkAuthorization
+import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 
 @Service
@@ -18,6 +19,8 @@ class UserService(
     private val basicAuthorization: BasicAuthorization,
 ) {
     suspend fun getUser(token: String): User = userDataSource.getByToken(token)
+
+    suspend fun getUser(id: ObjectId): User? = userDataSource.get(id)
 
     suspend fun getUserResponse(token: String): UserResponse = UserResponse.fromUser(getUser(token))
 
@@ -31,5 +34,9 @@ class UserService(
         }
 
         return tokenService.createToken(user)
+    }
+
+    companion object {
+        const val UNKNOWN_USER_NICK = "Хер с горы"
     }
 }

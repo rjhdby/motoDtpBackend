@@ -51,8 +51,12 @@ class MessageService(
         return messagesDataSource.getForTopic(topic) { CanSeeMessageFilter.canSee(user, it) }
     }
 
-    suspend fun setHidden(token: String, id: String, value: Boolean): Message {
-        return applyChanges(token, id) { it.hidden = value }
+    suspend fun setHidden(token: String, id: String): Message {
+        return applyChanges(token, id) { it.hidden = true }
+    }
+
+    suspend fun resetHidden(token: String, id: String): Message {
+        return applyChanges(token, id) { it.hidden = false }
     }
 
     suspend fun modifyText(token: String, id: String, text: String): Message {
