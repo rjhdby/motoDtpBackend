@@ -9,11 +9,12 @@ class Cache<KEY : Any, ENTRY : Any>(
     private val cache: ConcurrentHashMap<KEY, ENTRY> = ConcurrentHashMap(estimatedSize / 2, 0.75f, 2)
 
     fun put(key: KEY, entry: ENTRY) {
-        cache[key] = entry
         expire()
+        cache[key] = entry
     }
 
     fun get(key: KEY): ENTRY? {
+        expire()
         val entry = cache[key]
         if (entry != null) {
             put(key, entry)
