@@ -5,11 +5,12 @@ import moto.dtp.info.backend.exception.ImpossibleException
 import moto.dtp.info.backend.rest.response.MessageResponse
 import moto.dtp.info.backend.service.UserService
 import moto.dtp.info.backend.service.UserService.Companion.UNKNOWN_USER_NICK
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.*
 
-@Service
+@Component
 class MessageConverter(
     private val userService: UserService
 ) {

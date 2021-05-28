@@ -5,7 +5,6 @@ import moto.dtp.info.backend.domain.user.UserRole
 import moto.dtp.info.backend.domain.user.UserRole.*
 import moto.dtp.info.backend.exception.InsufficientRightsException
 import moto.dtp.info.backend.exception.NotFoundException
-import moto.dtp.info.backend.rest.response.UserResponse
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 
@@ -13,7 +12,7 @@ import org.springframework.stereotype.Service
 class ModeratorService(
     private val userService: UserService,
 ) {
-    suspend fun setRole(token: String, uid: String, role: UserRole): UserResponse {
+    suspend fun setRole(token: String, uid: String, role: UserRole): User {
         val admin = userService.getUserByToken(token)
         guardModerator(admin)
         val user = userService.getUser(ObjectId(uid)) ?: throw NotFoundException()
@@ -27,7 +26,7 @@ class ModeratorService(
 
         user.role = role
 
-        return UserResponse.fromUser(userService.persist(user))
+        return userService.persist(user)
     }
 
     private fun guardModerator(user: User) {

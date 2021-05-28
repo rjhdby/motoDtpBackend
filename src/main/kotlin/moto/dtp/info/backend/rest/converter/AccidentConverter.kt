@@ -8,11 +8,12 @@ import moto.dtp.info.backend.rest.response.AccidentResponse
 import moto.dtp.info.backend.service.UserService
 import moto.dtp.info.backend.service.filters.CanSeeMessageFilter
 import org.bson.types.ObjectId
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.*
 
-@Service
+@Component
 class AccidentConverter(
     private val userService: UserService,
     private val messagesDataSource: MessagesDataSource

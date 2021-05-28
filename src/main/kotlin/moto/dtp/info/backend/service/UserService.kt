@@ -2,6 +2,7 @@ package moto.dtp.info.backend.service
 
 import moto.dtp.info.backend.datasources.UserDataSource
 import moto.dtp.info.backend.domain.user.User
+import moto.dtp.info.backend.exception.NotFoundException
 import moto.dtp.info.backend.rest.request.AuthRequest
 import moto.dtp.info.backend.rest.response.UserResponse
 import moto.dtp.info.backend.security.BasicAuthorization
@@ -22,8 +23,6 @@ class UserService(
 
     suspend fun getUser(id: ObjectId): User? = userDataSource.get(id)
 
-    suspend fun getUserResponse(token: String): UserResponse = UserResponse.fromUser(getUserByToken(token))
-
     suspend fun register(request: AuthRequest): String {
         authRequestValidator.validate(request)
 
@@ -38,6 +37,10 @@ class UserService(
 
     suspend fun persist(user: User): User {
         return userDataSource.persist(user)
+    }
+
+    suspend fun invalidate(id: String): User {
+        return userDataSource.invalidateAndGet(ObjectId(id)) ?: throw NotFoundException()
     }
 
     companion object {

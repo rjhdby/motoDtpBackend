@@ -57,4 +57,13 @@ class UserDataSource(
 
         return persisted
     }
+
+    suspend fun invalidateAndGet(id: ObjectId): User? {
+        val persisted = userRepository.findById(id).awaitFirstOrNull()
+        if (persisted != null) {
+            cache.put(persisted.id!!.toHexString(), Pair(persisted, System.currentTimeMillis()))
+        }
+
+        return persisted
+    }
 }

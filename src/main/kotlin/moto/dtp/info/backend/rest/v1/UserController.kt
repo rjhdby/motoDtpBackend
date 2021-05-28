@@ -1,6 +1,11 @@
 package moto.dtp.info.backend.rest.v1
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import kotlinx.coroutines.reactor.mono
+import moto.dtp.info.backend.domain.user.User
+import moto.dtp.info.backend.rest.Versions
+import moto.dtp.info.backend.rest.converter.UserConverter
 import moto.dtp.info.backend.rest.handler.ResponseHandler.handle
 import moto.dtp.info.backend.rest.request.AuthRequest
 import moto.dtp.info.backend.rest.response.UserResponse
@@ -15,23 +20,28 @@ import reactor.core.publisher.Mono
 @RequestMapping(value = ["${Versions.V1}/user"])
 class UserController(
     private val userService: UserService,
+    private val userConverter: UserConverter
 ) {
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
+    @Operation(tags = ["User API"], description = "Auth and retrieve user information")
     @GetMapping(value = ["/"])
     fun auth(
         @RequestHeader(value = "token") token: String
-    ): Mono<ResponseEntity<UserResponse>> = mono { handle { userService.getUserResponse(token) } }
+    ): Mono<ResponseEntity<UserResponse>> = mono { userService.getUserByToken(token).toResponse() }
 
+    @Operation(tags = ["User API"], description = "Register as anonymous")
     @PostMapping(value = ["/register/anonymous"])
     fun registerAnonymous(): Mono<ResponseEntity<String>> =
         mono { handle { userService.register(AuthRequest.Anonymous) } }
 
+    @Operation(tags = ["User API"], description = "Register with login and password")
     @PostMapping(value = ["/register/basic"], consumes = ["application/json"])
     fun registerBasic(
         @RequestBody request: AuthRequest.Basic
     ): Mono<ResponseEntity<String>> = mono { handle { userService.register(request) } }
 
+    @Operation(tags = ["User API"], description = "Register via VK OAuth. Callback for VK OAuth API.")
     @GetMapping(value = ["/register/vk"])
     fun registerVK(
         @RequestParam code: String?,
@@ -43,6 +53,15 @@ class UserController(
             logger.error(description)
             return mono { handle { throwInternal() } }
         }
+
         return mono { handle { userService.register(AuthRequest.VK(code)) } }
     }
+
+    @Operation(tags = ["User API"], description = "Invalidate user cache. For developer purposes only.")
+    @GetMapping(value = ["/invalidate/{id}"])
+    fun invalidateCache(
+        @Parameter(description = "User ID") @RequestParam id: String
+    ): Mono<ResponseEntity<UserResponse>> = mono { userService.invalidate(id).toResponse() }
+
+    private suspend fun User.toResponse() = handle { userConverter.toUserResponse(this) }
 }

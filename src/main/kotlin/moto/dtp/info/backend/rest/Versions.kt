@@ -1,4 +1,4 @@
-package moto.dtp.info.backend.rest.v1
+package moto.dtp.info.backend.rest
 
 object Versions {
     const val V1 = "v1"
