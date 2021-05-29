@@ -2,7 +2,7 @@ FROM bellsoft/liberica-openjdk-alpine-musl:15
 
 COPY ./build/libs/motodtp-0.0.1-SNAPSHOT.jar motodtp.jar
 
-EXPOSE 8080
+EXPOSE 433
 
 CMD ["java", \
  "-XX:MaxRAMPercentage=80", \

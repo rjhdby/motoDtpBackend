@@ -17,6 +17,14 @@ motodtp:
     dataUrl: https://api.vk.com/method/users.get
     secret: ${VK_APP_SECRET:aaaaa}
 
+server:
+  ssl:
+    key-store-type: PKCS12
+    key-store: ${KEYSTORE:classpath:keystore/backend_test.p12}
+    key-store-password: ${KEY_PASSWORD:123456}
+    key-alias: ${KEY_ALIAS:backend_test}
+    enabled: true
+
 logging:
   level:
     org.springframework.web.reactive.function.client.ExchangeFunctions: TRACE

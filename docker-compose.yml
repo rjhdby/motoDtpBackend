@@ -6,9 +6,9 @@ services:
       dockerfile: ./Dockerfile
     image: motodtp
     ports:
-      - "8080:8080"
+      - "433:433"
     environment:
-      - SERVER_PORT=8080
+      - SERVER_PORT=433
       - MONGODB=mongodb://mongo:27017/
     depends_on:
       - mongo
