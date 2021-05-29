@@ -9,7 +9,6 @@ import moto.dtp.info.backend.exception.InsufficientRightsException
 import moto.dtp.info.backend.exception.NotFoundException
 import moto.dtp.info.backend.service.filters.CanSeeAccidentFilter
 import moto.dtp.info.backend.service.filters.CanSeeMessageFilter
-import moto.dtp.info.backend.utils.TimeUtils
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
 import kotlin.contracts.ExperimentalContracts
@@ -31,7 +30,7 @@ class MessageService(
         val accident = accidentDataSource.get(topic)
         guardCanSeeAccident(user, accident)
 
-        val current = TimeUtils.currentSec()
+        val current = System.currentTimeMillis()
         val message = Message(
             author = user.id!!,
             topic = accident.id!!,
@@ -67,10 +66,10 @@ class MessageService(
     private suspend fun applyChanges(token: String, id: String, mutator: (Message) -> Unit): Message {
         val user = userService.getUserByToken(token)
         val message = messagesDataSource.get(ObjectId(id)) ?: throw NotFoundException()
-        guarModerator(user)
+        guardModerator(user)
 
         mutator(message)
-        message.updated = TimeUtils.currentSec()
+        message.updated = System.currentTimeMillis()
 
         return messagesDataSource.persist(message)
     }
@@ -88,7 +87,7 @@ class MessageService(
         }
     }
 
-    private fun guarModerator(user: User) {
+    private fun guardModerator(user: User) {
         if (!user.role.moderationAllowed()) {
             throw InsufficientRightsException()
         }

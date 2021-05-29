@@ -1,6 +1,7 @@
 package moto.dtp.info.backend.utils
 
 object TimeUtils {
+    @Deprecated("Use ms", replaceWith = ReplaceWith("System.currentTimeMillis()"))
     fun currentSec() = System.currentTimeMillis() / 1000
 
     const val SECOND = 1000L

@@ -10,7 +10,6 @@ import moto.dtp.info.backend.exception.InsufficientRightsException
 import moto.dtp.info.backend.exception.NotFoundException
 import moto.dtp.info.backend.rest.request.CreateAccidentRequest
 import moto.dtp.info.backend.service.filters.CanSeeAccidentFilter
-import moto.dtp.info.backend.utils.TimeUtils
 import org.springframework.stereotype.Service
 
 @Service
@@ -26,7 +25,7 @@ class AccidentService(
         geoConstraint: GeoConstraint
     ): List<Accident> {
         val user = getUser(token)
-        val from = TimeUtils.currentSec() - MobileConfiguration.adjustDepth(user.role, depth) * SECONDS_IN_HOUR
+        val from = System.currentTimeMillis() - MobileConfiguration.adjustDepthInHours(user.role, depth) * MS_IN_HOUR
 
         return accidentDataSource.getListFrom(from)
             .filter { it.updated > lastFetch ?: from }
@@ -37,7 +36,7 @@ class AccidentService(
 
     suspend fun get(token: String, id: String): Accident {
         val user = getUser(token)
-        val from = TimeUtils.currentSec() - MobileConfiguration.adjustDepth(user.role, 356) * SECONDS_IN_HOUR
+        val from = System.currentTimeMillis() - MobileConfiguration.adjustDepthInHours(user.role, 356) * MS_IN_HOUR
 
         return accidentDataSource.findOneFrom(id, from)?.takeIf { CanSeeAccidentFilter.canSee(user, it) }
                ?: throw NotFoundException()
@@ -47,7 +46,7 @@ class AccidentService(
         val user = getUser(token)
         guardReadOnly(user)
 
-        val currentMillis = TimeUtils.currentSec()
+        val currentMillis = System.currentTimeMillis()
 
         val accident = Accident(
             created = currentMillis,
@@ -86,7 +85,7 @@ class AccidentService(
     suspend fun setResolve(token: String, id: String, value: Boolean): Accident {
         guardReadOnly(getUser(token))
 
-        return applyChanges(id) { it.resolved = if (value) TimeUtils.currentSec() else null }
+        return applyChanges(id) { it.resolved = if (value) System.currentTimeMillis() else null }
     }
 
     suspend fun setConflict(token: String, id: String, value: Boolean): Accident {
@@ -105,7 +104,7 @@ class AccidentService(
         val accident = accidentDataSource.get(id) ?: throw NotFoundException()
 
         mutator(accident)
-        accident.updated = TimeUtils.currentSec()
+        accident.updated = System.currentTimeMillis()
 
         return accidentDataSource.persist(accident)
     }
@@ -135,6 +134,6 @@ class AccidentService(
     }
 
     companion object {
-        private const val SECONDS_IN_HOUR = 3600L
+        private const val MS_IN_HOUR = 3_600_000L
     }
 }

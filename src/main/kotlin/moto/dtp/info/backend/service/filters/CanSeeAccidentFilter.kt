@@ -5,7 +5,8 @@ import moto.dtp.info.backend.domain.user.User
 
 object CanSeeAccidentFilter : CanSeeFilter<Accident> {
     override fun canSee(user: User, entry: Accident): Boolean = when {
-        user.role.moderationAllowed() -> true
-        else                          -> !entry.hidden
+        user.role.moderationAllowed()               -> true
+        user.id != null && user.id == entry.creator -> true
+        else                                        -> !entry.hidden
     }
 }

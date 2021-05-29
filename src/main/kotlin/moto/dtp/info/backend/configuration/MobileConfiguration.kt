@@ -1,12 +1,13 @@
 package moto.dtp.info.backend.configuration
 
 import moto.dtp.info.backend.domain.user.UserRole
-import java.lang.Integer.max
+import moto.dtp.info.backend.domain.user.UserRole.*
+import java.lang.Integer.min
 
 object MobileConfiguration {
-    fun adjustDepth(role: UserRole, requestedDepth: Int) = when (role) {
-        UserRole.DEVELOPER                 -> requestedDepth
-        UserRole.ADMIN, UserRole.MODERATOR -> max(requestedDepth, 48)
-        else                               -> max(requestedDepth, 24)
+    fun adjustDepthInHours(role: UserRole, requestedDepth: Int) = when (role) {
+        DEVELOPER, SUPER_ADMIN -> requestedDepth
+        ADMIN, MODERATOR       -> min(requestedDepth, 48)
+        else                   -> min(requestedDepth, 24)
     }.toLong()
 }

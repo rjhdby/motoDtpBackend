@@ -9,7 +9,6 @@ import moto.dtp.info.backend.service.UserService
 import moto.dtp.info.backend.service.filters.CanSeeMessageFilter
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Component
-import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.*
 
@@ -20,9 +19,9 @@ class AccidentConverter(
 ) {
     suspend fun toAccidentResponse(accident: Accident) = AccidentResponse(
         id = accident.id?.toHexString() ?: throw ImpossibleException("Return accident without ID attempted"),
-        created = Date.from(Instant.ofEpochSecond(accident.created)),
+        created = Date.from(Instant.ofEpochMilli(accident.created)),
         type = accident.type,
-        resolved = accident.resolved?.let { Date.from(Instant.ofEpochSecond(it)) },
+        resolved = accident.resolved?.let { Date.from(Instant.ofEpochMilli(it)) },
         verified = accident.verified,
         hidden = accident.hidden,
         hardness = accident.hardness,

@@ -24,24 +24,24 @@ class UserController(
 ) {
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
-    @Operation(tags = ["User API"], description = "Auth and retrieve user information")
+    @Operation(tags = ["User API"], summary = "Auth and retrieve user information")
     @GetMapping(value = ["/"])
     fun auth(
         @RequestHeader(value = "token") token: String
     ): Mono<ResponseEntity<UserResponse>> = mono { userService.getUserByToken(token).toResponse() }
 
-    @Operation(tags = ["User API"], description = "Register as anonymous")
+    @Operation(tags = ["User API"], summary = "Register as anonymous")
     @PostMapping(value = ["/register/anonymous"])
     fun registerAnonymous(): Mono<ResponseEntity<String>> =
         mono { handle { userService.register(AuthRequest.Anonymous) } }
 
-    @Operation(tags = ["User API"], description = "Register with login and password")
+    @Operation(tags = ["User API"], summary = "Register with login and password")
     @PostMapping(value = ["/register/basic"], consumes = ["application/json"])
     fun registerBasic(
         @RequestBody request: AuthRequest.Basic
     ): Mono<ResponseEntity<String>> = mono { handle { userService.register(request) } }
 
-    @Operation(tags = ["User API"], description = "Register via VK OAuth. Callback for VK OAuth API.")
+    @Operation(tags = ["User API"], summary = "Register via VK OAuth. Callback for VK OAuth API.")
     @GetMapping(value = ["/register/vk"])
     fun registerVK(
         @RequestParam code: String?,
@@ -57,7 +57,7 @@ class UserController(
         return mono { handle { userService.register(AuthRequest.VK(code)) } }
     }
 
-    @Operation(tags = ["User API"], description = "Invalidate user cache. For developer purposes only.")
+    @Operation(tags = ["User API"], summary = "Invalidate user cache. For developer purposes only.")
     @GetMapping(value = ["/invalidate/{id}"])
     fun invalidateCache(
         @Parameter(description = "User ID") @RequestParam id: String

@@ -20,14 +20,14 @@ class MessageController(
     private val messageService: MessageService,
     private val messageConverter: MessageConverter
 ) {
-    @Operation(tags = ["Messages API"], description = "Get a list of messages for the topic(accident)")
+    @Operation(tags = ["Messages API"], summary = "Get a list of messages for the topic(accident)")
     @GetMapping(value = ["/{topic}"])
     fun list(
         @RequestHeader("token") token: String,
         @PathVariable topic: String
     ): Mono<ResponseEntity<List<MessageResponse>>> = mono { messageService.getList(token, topic).toResponse() }
 
-    @Operation(tags = ["Messages API"], description = "Create new message")
+    @Operation(tags = ["Messages API"], summary = "Create new message")
     @PostMapping(value = ["/{topic}"])
     fun create(
         @RequestHeader("token") token: String,
@@ -35,21 +35,21 @@ class MessageController(
         @RequestParam text: String
     ): Mono<ResponseEntity<MessageResponse>> = mono { messageService.create(token, topic, text).toResponse() }
 
-    @Operation(tags = ["Messages API"], description = "Hide a message")
+    @Operation(tags = ["Messages API"], summary = "Hide a message")
     @PutMapping(value = ["/{id}/hide"])
     fun hide(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
     ): Mono<ResponseEntity<MessageResponse>> = mono { messageService.setHidden(token, id).toResponse() }
 
-    @Operation(tags = ["Messages API"], description = "Show a previously hidden message")
+    @Operation(tags = ["Messages API"], summary = "Show a previously hidden message")
     @PutMapping(value = ["/{id}/show"])
     fun show(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
     ): Mono<ResponseEntity<MessageResponse>> = mono { messageService.resetHidden(token, id).toResponse() }
 
-    @Operation(tags = ["Messages API"], description = "Update a message")
+    @Operation(tags = ["Messages API"], summary = "Update a message")
     @PutMapping(value = ["/{id}"])
     fun modifyText(
         @RequestHeader("token") token: String,

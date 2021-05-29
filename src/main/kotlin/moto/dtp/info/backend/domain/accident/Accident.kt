@@ -5,15 +5,15 @@ import org.bson.types.ObjectId
 
 data class Accident(
     override val id: ObjectId? = null,
-    val created: Long,
-    var updated: Long,
     var type: AccidentType,
-    var resolved: Long? = null,
-    var verified: Boolean,
-    var hidden: Boolean,
-    var hardness: AccidentHardness? = null,
+    val created: Long,
     val creator: ObjectId,
     var location: Address,
-    var description: String,
+    var updated: Long = created,
+    var resolved: Long? = null,
+    var verified: Boolean = false,
+    var hidden: Boolean = false,
+    var hardness: AccidentHardness? = null,
+    var description: String = "",
     var conflict: Boolean = false
 ) : EntityWithId

@@ -6,7 +6,6 @@ import moto.dtp.info.backend.rest.response.MessageResponse
 import moto.dtp.info.backend.service.UserService
 import moto.dtp.info.backend.service.UserService.Companion.UNKNOWN_USER_NICK
 import org.springframework.stereotype.Component
-import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.*
 
@@ -19,7 +18,7 @@ class MessageConverter(
         author = message.author.toHexString(),
         authorNick = userService.getUser(message.author)?.nick ?: UNKNOWN_USER_NICK,
         topic = message.topic.toHexString(),
-        created = Date.from(Instant.ofEpochSecond(message.created)),
+        created = Date.from(Instant.ofEpochMilli(message.created)),
         hidden = message.hidden,
         text = message.text,
     )

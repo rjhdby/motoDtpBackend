@@ -19,7 +19,7 @@ class ModeratorController(
     private val moderatorService: ModeratorService,
     private val userConverter: UserConverter
 ) {
-    @Operation(tags = ["Moderator API"], description = "Grant MODERATOR role to the user")
+    @Operation(tags = ["Moderator API"], summary = "Grant MODERATOR role to the user")
     @PutMapping(value = ["/{uid}/promote"])
     fun promoteModerator(
         @RequestHeader("token") token: String,
@@ -27,14 +27,14 @@ class ModeratorController(
     ): Mono<ResponseEntity<UserResponse>> =
         mono { moderatorService.setRole(token, uid, UserRole.MODERATOR).toResponse() }
 
-    @Operation(tags = ["Moderator API"], description = "Revoke MODERATOR role from the user")
+    @Operation(tags = ["Moderator API"], summary = "Revoke MODERATOR role from the user")
     @PutMapping(value = ["/{uid}/revoke"])
     fun revokeModerator(
         @RequestHeader("token") token: String,
         @PathVariable uid: String
     ): Mono<ResponseEntity<UserResponse>> = mono { moderatorService.setRole(token, uid, UserRole.USER).toResponse() }
 
-    @Operation(tags = ["Moderator API"], description = "Ban user")
+    @Operation(tags = ["Moderator API"], summary = "Ban user")
     @PutMapping(value = ["/{uid}/ban"])
     fun ban(
         @RequestHeader("token") token: String,
@@ -42,7 +42,7 @@ class ModeratorController(
     ): Mono<ResponseEntity<UserResponse>> =
         mono { moderatorService.setRole(token, uid, UserRole.READ_ONLY).toResponse() }
 
-    @Operation(tags = ["Moderator API"], description = "Unban user")
+    @Operation(tags = ["Moderator API"], summary = "Unban user")
     @PutMapping(value = ["/{uid}/unban"])
     fun unban(
         @RequestHeader("token") token: String,

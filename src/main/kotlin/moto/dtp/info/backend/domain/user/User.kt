@@ -2,14 +2,13 @@ package moto.dtp.info.backend.domain.user
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import moto.dtp.info.backend.domain.EntityWithId
-import moto.dtp.info.backend.utils.TimeUtils
 import org.bson.types.ObjectId
 import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class User(
     override val id: ObjectId? = null,
-    val created: Long = TimeUtils.currentSec(),
+    val created: Long = System.currentTimeMillis(),
     val nick: String,
     var role: UserRole = UserRole.USER
 ) : EntityWithId {
