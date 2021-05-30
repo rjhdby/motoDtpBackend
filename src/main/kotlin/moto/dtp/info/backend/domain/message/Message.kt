@@ -13,4 +13,4 @@ data class Message(
     var updated: Long,
     var hidden: Boolean = false,
     var text: String
-): EntityWithId
+) : EntityWithId

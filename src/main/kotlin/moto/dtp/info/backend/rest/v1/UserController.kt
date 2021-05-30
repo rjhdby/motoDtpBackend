@@ -28,7 +28,7 @@ class UserController(
     @GetMapping(value = ["/"])
     fun auth(
         @RequestHeader(value = "token") token: String
-    ): Mono<ResponseEntity<UserResponse>> = mono { userService.getUserByToken(token).toResponse() }
+    ): Mono<ResponseEntity<UserResponse>> = response { userService.getUserByToken(token) }
 
     @Operation(tags = ["User API"], summary = "Register as anonymous")
     @PostMapping(value = ["/register/anonymous"])
@@ -61,7 +61,7 @@ class UserController(
     @GetMapping(value = ["/invalidate/{id}"])
     fun invalidateCache(
         @Parameter(description = "User ID") @RequestParam id: String
-    ): Mono<ResponseEntity<UserResponse>> = mono { userService.invalidate(id).toResponse() }
+    ): Mono<ResponseEntity<UserResponse>> = response { userService.invalidate(id) }
 
-    private suspend fun User.toResponse() = handle { userConverter.toUserResponse(this) }
+    private fun response(provider: suspend () -> User) = mono { handle { userConverter.toUserResponse(provider()) } }
 }

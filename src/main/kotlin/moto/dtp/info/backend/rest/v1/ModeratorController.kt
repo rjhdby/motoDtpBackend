@@ -24,30 +24,28 @@ class ModeratorController(
     fun promoteModerator(
         @RequestHeader("token") token: String,
         @PathVariable uid: String
-    ): Mono<ResponseEntity<UserResponse>> =
-        mono { moderatorService.setRole(token, uid, UserRole.MODERATOR).toResponse() }
+    ): Mono<ResponseEntity<UserResponse>> = response { moderatorService.setRole(token, uid, UserRole.MODERATOR) }
 
     @Operation(tags = ["Moderator API"], summary = "Revoke MODERATOR role from the user")
     @PutMapping(value = ["/{uid}/revoke"])
     fun revokeModerator(
         @RequestHeader("token") token: String,
         @PathVariable uid: String
-    ): Mono<ResponseEntity<UserResponse>> = mono { moderatorService.setRole(token, uid, UserRole.USER).toResponse() }
+    ): Mono<ResponseEntity<UserResponse>> = response { moderatorService.setRole(token, uid, UserRole.USER) }
 
     @Operation(tags = ["Moderator API"], summary = "Ban user")
     @PutMapping(value = ["/{uid}/ban"])
     fun ban(
         @RequestHeader("token") token: String,
         @PathVariable uid: String
-    ): Mono<ResponseEntity<UserResponse>> =
-        mono { moderatorService.setRole(token, uid, UserRole.READ_ONLY).toResponse() }
+    ): Mono<ResponseEntity<UserResponse>> = response { moderatorService.setRole(token, uid, UserRole.READ_ONLY) }
 
     @Operation(tags = ["Moderator API"], summary = "Unban user")
     @PutMapping(value = ["/{uid}/unban"])
     fun unban(
         @RequestHeader("token") token: String,
         @PathVariable uid: String
-    ): Mono<ResponseEntity<UserResponse>> = mono { moderatorService.setRole(token, uid, UserRole.USER).toResponse() }
+    ): Mono<ResponseEntity<UserResponse>> = response { moderatorService.setRole(token, uid, UserRole.USER) }
 
-    private suspend fun User.toResponse() = handle { userConverter.toUserResponse(this) }
+    private fun response(provider: suspend () -> User) = mono { handle { userConverter.toUserResponse(provider()) } }
 }

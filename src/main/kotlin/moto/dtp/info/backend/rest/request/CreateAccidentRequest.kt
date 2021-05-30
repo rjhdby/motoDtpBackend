@@ -6,7 +6,7 @@ import moto.dtp.info.backend.domain.accident.Address
 
 data class CreateAccidentRequest(
     val type: AccidentType,
-    val hardness: AccidentHardness? = null,
     val location: Address,
     val description: String,
+    val hardness: AccidentHardness? = null,
 )

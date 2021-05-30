@@ -30,13 +30,13 @@ class AccidentController(
         @RequestParam lon: Double?,
         @RequestParam radius: Int?,
         @Parameter(description = "Last fetch time as UNIX timestamp in milliseconds") @RequestParam lastFetch: Long?
-    ): Mono<ResponseEntity<List<AccidentResponse>>> = mono {
+    ): Mono<ResponseEntity<List<AccidentResponse>>> = listResponse {
         accidentService.getList(
             token,
             depth,
             lastFetch,
             GeoConstraint.fromParams(lat, lon, radius)
-        ).toResponse()
+        )
     }
 
     @Operation(tags = ["Accident API"], summary = "Get a single accident")
@@ -44,15 +44,14 @@ class AccidentController(
     fun get(
         @RequestHeader("token") token: String,
         @PathVariable id: String
-    ): Mono<ResponseEntity<AccidentResponse>> = mono { accidentService.get(token, id).toResponse() }
+    ): Mono<ResponseEntity<AccidentResponse>> = response { accidentService.get(token, id) }
 
     @Operation(tags = ["Accident API"], summary = "Create new accident")
     @PostMapping(value = ["/"])
     fun create(
         @RequestHeader("token") token: String,
         @RequestBody request: CreateAccidentRequest
-    ): Mono<ResponseEntity<AccidentResponse>> =
-        mono { accidentService.create(token, request).toResponse() }
+    ): Mono<ResponseEntity<AccidentResponse>> = response { accidentService.create(token, request) }
 
     @Operation(tags = ["Accident API"], summary = "Update an accident")
     @PostMapping(value = ["/{id}"])
@@ -60,62 +59,53 @@ class AccidentController(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
         @RequestBody request: CreateAccidentRequest
-    ): Mono<ResponseEntity<AccidentResponse>> =
-        mono { accidentService.update(token, id, request).toResponse() }
+    ): Mono<ResponseEntity<AccidentResponse>> = response { accidentService.update(token, id, request) }
 
     @Operation(tags = ["Accident API"], summary = "Hide an accident")
     @PutMapping(value = ["/{id}/hide"])
     fun hide(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
-    ): Mono<ResponseEntity<AccidentResponse>> =
-        mono { accidentService.setHidden(token, id, true).toResponse() }
+    ): Mono<ResponseEntity<AccidentResponse>> = response { accidentService.setHidden(token, id, true) }
 
     @Operation(tags = ["Accident API"], summary = "Show previously hidden accident")
     @PutMapping(value = ["/{id}/show"])
     fun show(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
-    ): Mono<ResponseEntity<AccidentResponse>> =
-        mono { accidentService.setHidden(token, id, false).toResponse() }
+    ): Mono<ResponseEntity<AccidentResponse>> = response { accidentService.setHidden(token, id, false) }
 
     @Operation(tags = ["Accident API"], summary = "Resolve an accident")
     @PutMapping(value = ["/{id}/resolve"])
     fun resolve(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
-    ): Mono<ResponseEntity<AccidentResponse>> =
-        mono { accidentService.setResolve(token, id, true).toResponse() }
+    ): Mono<ResponseEntity<AccidentResponse>> = response { accidentService.setResolve(token, id, true) }
 
     @Operation(tags = ["Accident API"], summary = "Reopen an accident")
     @PutMapping(value = ["/{id}/reopen"])
     fun reopen(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
-    ): Mono<ResponseEntity<AccidentResponse>> =
-        mono { accidentService.setResolve(token, id, false).toResponse() }
+    ): Mono<ResponseEntity<AccidentResponse>> = response { accidentService.setResolve(token, id, false) }
 
     @Operation(tags = ["Accident API"], summary = "Mark the accident as a conflict")
     @PutMapping(value = ["/{id}/conflict"])
     fun conflict(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
-    ): Mono<ResponseEntity<AccidentResponse>> =
-        mono { accidentService.setConflict(token, id, true).toResponse() }
+    ): Mono<ResponseEntity<AccidentResponse>> = response { accidentService.setConflict(token, id, true) }
 
     @Operation(tags = ["Accident API"], summary = "Revoke a conflict mark")
     @PutMapping(value = ["/{id}/conflict/cancel"])
     fun cancelConflict(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
-    ): Mono<ResponseEntity<AccidentResponse>> =
-        mono { accidentService.setConflict(token, id, false).toResponse() }
+    ): Mono<ResponseEntity<AccidentResponse>> = response { accidentService.setConflict(token, id, false) }
 
-    private suspend fun Accident.toResponse() = handle {
-        accidentConverter.toAccidentResponse(this)
-    }
+    private fun response(provider: suspend () -> Accident) =
+        mono { handle { accidentConverter.toAccidentResponse(provider()) } }
 
-    private suspend fun Iterable<Accident>.toResponse() = handle {
-        map { accidentConverter.toAccidentResponse(it) }
-    }
+    private fun listResponse(provider: suspend () -> Iterable<Accident>) =
+        mono { handle { provider().map { accidentConverter.toAccidentResponse(it) } } }
 }

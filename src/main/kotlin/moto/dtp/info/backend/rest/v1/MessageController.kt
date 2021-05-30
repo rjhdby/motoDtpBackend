@@ -25,7 +25,7 @@ class MessageController(
     fun list(
         @RequestHeader("token") token: String,
         @PathVariable topic: String
-    ): Mono<ResponseEntity<List<MessageResponse>>> = mono { messageService.getList(token, topic).toResponse() }
+    ): Mono<ResponseEntity<List<MessageResponse>>> = listResponse { messageService.getList(token, topic) }
 
     @Operation(tags = ["Messages API"], summary = "Create new message")
     @PostMapping(value = ["/{topic}"])
@@ -33,21 +33,21 @@ class MessageController(
         @RequestHeader("token") token: String,
         @PathVariable topic: String,
         @RequestParam text: String
-    ): Mono<ResponseEntity<MessageResponse>> = mono { messageService.create(token, topic, text).toResponse() }
+    ): Mono<ResponseEntity<MessageResponse>> = response { messageService.create(token, topic, text) }
 
     @Operation(tags = ["Messages API"], summary = "Hide a message")
     @PutMapping(value = ["/{id}/hide"])
     fun hide(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
-    ): Mono<ResponseEntity<MessageResponse>> = mono { messageService.setHidden(token, id).toResponse() }
+    ): Mono<ResponseEntity<MessageResponse>> = response { messageService.setHidden(token, id) }
 
     @Operation(tags = ["Messages API"], summary = "Show a previously hidden message")
     @PutMapping(value = ["/{id}/show"])
     fun show(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
-    ): Mono<ResponseEntity<MessageResponse>> = mono { messageService.resetHidden(token, id).toResponse() }
+    ): Mono<ResponseEntity<MessageResponse>> = response { messageService.resetHidden(token, id) }
 
     @Operation(tags = ["Messages API"], summary = "Update a message")
     @PutMapping(value = ["/{id}"])
@@ -55,9 +55,11 @@ class MessageController(
         @RequestHeader("token") token: String,
         @PathVariable id: String,
         @RequestParam text: String
-    ): Mono<ResponseEntity<MessageResponse>> = mono { messageService.modifyText(token, id, text).toResponse() }
+    ): Mono<ResponseEntity<MessageResponse>> = response { messageService.modifyText(token, id, text) }
 
-    private suspend fun Message.toResponse() = handle { messageConverter.toMessageResponse(this) }
+    private fun response(provider: suspend () -> Message) =
+        mono { handle { messageConverter.toMessageResponse(provider()) } }
 
-    private suspend fun Iterable<Message>.toResponse() = handle { map { messageConverter.toMessageResponse(it) } }
+    private fun listResponse(provider: suspend () -> Iterable<Message>) =
+        mono { handle { provider().map { messageConverter.toMessageResponse(it) } } }
 }
