@@ -5,8 +5,13 @@ import org.springframework.boot.context.properties.ConstructorBinding
 
 @ConstructorBinding
 @ConfigurationProperties(prefix = "motodtp")
-data class MotoDtpConfiguration(val security: Security, val vk: Vk) {
+data class MotoDtpConfiguration(
+    val security: Security,
+    val vk: Vk,
+    val nomination: Nomination
+) {
     data class Security(val jwtSecret: String)
+
     data class Vk(
         val appId: Int,
         val apiVersion: String,
@@ -15,4 +20,6 @@ data class MotoDtpConfiguration(val security: Security, val vk: Vk) {
         val dataUrl: String,
         val secret: String
     )
+
+    data class Nomination(val url: String)
 }

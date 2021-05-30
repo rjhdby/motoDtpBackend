@@ -16,6 +16,8 @@ motodtp:
     tokenUrl: https://oauth.vk.com/access_token
     dataUrl: https://api.vk.com/method/users.get
     secret: ${VK_APP_SECRET:aaaaa}
+  nomination:
+    url: https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=ru&zoom=18
 
 server:
   ssl:
