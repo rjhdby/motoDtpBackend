@@ -25,7 +25,7 @@ server:
     key-store: ${KEYSTORE:classpath:keystore/backend_test.p12}
     key-store-password: ${KEY_PASSWORD:123456}
     key-alias: ${KEY_ALIAS:backend_test}
-    enabled: true
+    enabled: ${SSL_ENABLED:false}
 
 logging:
   level:
