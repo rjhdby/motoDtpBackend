@@ -12,6 +12,7 @@ import moto.dtp.info.backend.service.MessageService
 import moto.dtp.info.backend.service.UserService
 import org.junit.ClassRule
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.runner.RunWith
@@ -27,6 +28,7 @@ import kotlin.contracts.ExperimentalContracts
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(classes = [MotoDtpBackendApplication::class])
 @RunWith(SpringRunner::class)
+@Disabled
 internal class MessagesServiceTest {
     @Autowired
     private lateinit var messagesService: MessageService
